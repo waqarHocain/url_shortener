@@ -1,12 +1,12 @@
 import re
-import unittest
 from time import sleep
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from django.test import LiveServerTestCase
 
 
-class NewVisitorTest(unittest.TestCase):
+class NewVisitorTest(LiveServerTestCase):
 
     def setUp(self):
         self.browser = webdriver.Firefox()
@@ -55,7 +55,3 @@ class NewVisitorTest(unittest.TestCase):
 
         self.assertEqual(self.browser.current_url, self.test_page_url)
 
-
-
-if __name__ == "__main__":
-    unittest.main()
