@@ -31,3 +31,7 @@ def homepage(request):
         }
         return JsonResponse(context)
     return render(request, "url_shrtnr/index.html")
+
+
+def mapper(request):
+    pass

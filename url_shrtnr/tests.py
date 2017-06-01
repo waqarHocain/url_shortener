@@ -2,7 +2,7 @@ from django.core.urlresolvers import resolve
 from django.http import HttpRequest
 from django.test import TestCase
 
-from .views import homepage
+from .views import homepage, mapper
 from .models import Url
 
 
@@ -51,6 +51,17 @@ class HomepageTest(TestCase):
         self.assertEqual(Url.objects.count(), 1)
         self.assertIn("https://www.github.com/waqarHocain", res2.content)
         self.assertIn(shortened_url, res2.content)
+
+
+class MapperTest(TestCase):
+    
+    def test_url_with_id_is_resolved_to_mapper(self):
+        found = resolve("/1")
+        self.assertEqual(found.func, mapper)
+
+    #def test_correct_url_is_returned_for_a_given_id(self):
+        #request = HttpRequest()
+        #response = mapper(request)
 
 
 class UrlModelTest(TestCase):
