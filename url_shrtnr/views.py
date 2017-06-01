@@ -1,6 +1,6 @@
-import json
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.http.response import Http404
+from django.shortcuts import render, redirect
 
 from .models import Url
 
@@ -33,5 +33,13 @@ def homepage(request):
     return render(request, "url_shrtnr/index.html")
 
 
-def mapper(request):
-    pass
+def mapper(request, id):
+    try:
+        url = Url.objects.get(id = int(id))
+    except Url.DoesNotExist:
+        raise Http404 
+    
+    full_url = url.full_url
+
+    return redirect(full_url)
+

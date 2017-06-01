@@ -56,12 +56,30 @@ class HomepageTest(TestCase):
 class MapperTest(TestCase):
     
     def test_url_with_id_is_resolved_to_mapper(self):
-        found = resolve("/1")
+        found = resolve("/1/")
         self.assertEqual(found.func, mapper)
 
-    #def test_correct_url_is_returned_for_a_given_id(self):
-        #request = HttpRequest()
-        #response = mapper(request)
+    def test_redirects_to_correct_url_for_a_given_id(self):
+        url = Url.objects.create(
+            full_url = "https://www.github.com/waqarHocain"
+        )
+        url.shortened_url = "http://localhost:8000/" + str(url.id)
+        url.save()
+
+        id = url.id
+        request = HttpRequest()
+        response = mapper(request, id)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["location"], url.full_url)
+
+    def test_404_page_is_returned_for_a_not_saved_url(self):
+        id = 1
+        request = HttpRequest()
+
+        self.assertRaises(mapper, args=(request, id))
+
+        #self.assertEqual(response.status_code, 404)
 
 
 class UrlModelTest(TestCase):
