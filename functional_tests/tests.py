@@ -11,7 +11,7 @@ class NewVisitorTest(LiveServerTestCase):
     def setUp(self):
         self.browser = webdriver.Firefox()
         self.url = "http://localhost:8000/"
-        self.test_page_url = "https://www.github.com/waqarHocain"
+        self.test_page_url = "https://github.com/waqarHocain"
 
     def tearDown(self):
         self.browser.quit()
