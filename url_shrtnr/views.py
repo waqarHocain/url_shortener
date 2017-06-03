@@ -3,6 +3,7 @@ from django.http.response import Http404
 from django.shortcuts import render, redirect
 
 from .models import Url
+from .base62 import ShortenUrl
 
 
 def homepage(request):
@@ -21,8 +22,10 @@ def homepage(request):
             return JsonResponse(context)
 
         # url is not saved
+        shrtnr = ShortenUrl()
+
         url = Url.objects.create(full_url=request.POST["input_url"])
-        url.shortened_url = "http://localhost:8000/" + str(url.id)
+        url.shortened_url = "http://localhost:8000/" + shrtnr.encode(url.id)
         url.save()
 
         context = {

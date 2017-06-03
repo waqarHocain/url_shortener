@@ -1,8 +1,9 @@
-from django.core.urlresolvers import resolve
+from django.core.urlresolvers import resolve, reverse
 from django.http import HttpRequest
 from django.test import TestCase
 
 from .views import homepage, mapper
+from .base62 import ShortenUrl
 from .models import Url
 
 
@@ -31,6 +32,31 @@ class HomepageTest(TestCase):
 
         self.assertIn("https://www.github.com/waqarHocain",
                       response.content.decode())
+
+    def test_shortened_url_is_saved_with_base62_encoded_id(self):
+        request = HttpRequest()
+        request.method = "POST"
+        request.POST["input_url"] = "https://www.twitter.com/waqarHocain"
+        response1 = homepage(request)
+
+        shrtnr = ShortenUrl()
+
+        first_saved_url = Url.objects.first()
+        base62_str1 = shrtnr.encode(first_saved_url.id)
+        expected_shortened_url_1 = "http://localhost:8000/" + base62_str1
+        self.assertIn(expected_shortened_url_1, response1.content)
+
+
+        request2 = HttpRequest()
+        request2.POST["input_url"] = "https://www.github.com.com/waqarHocain"
+        response2 = homepage(request)
+
+        second_saved_url = Url.objects.first()
+        base62_str2 = shrtnr.encode(second_saved_url.id)
+        expected_shortened_url_2 = "http://localhost:8000/" + base62_str2
+
+        self.assertIn(expected_shortened_url_2, response2.content)
+
 
     def test_for_an_already_saved_url_no_new_instance_is_saved(self):
         request = HttpRequest()
@@ -80,6 +106,37 @@ class MapperTest(TestCase):
         self.assertRaises(mapper, args=(request, id))
 
         #self.assertEqual(response.status_code, 404)
+
+
+class ShortenUrlTest(TestCase):
+
+    def test_it_can_convert_an_int_to_base62_str(self):
+        int_1 = 987
+        int_2 = 1
+        int_3 = 76589
+        expected_str_1 = "Fv"
+        expected_str_2 = "1"
+        expected_str_3 = "JvJ"
+
+        shortener = ShortenUrl()
+
+        self.assertEqual(shortener.encode(int_1), expected_str_1)
+        self.assertEqual(shortener.encode(int_2), expected_str_2)
+        self.assertEqual(shortener.encode(int_3), expected_str_3)
+
+    def test_it_can_convert_from_base62_str_to_base10_int(self):
+        str_1 = "Jjf"
+        str_2 = "Blo"
+        str_3 = "Awesme"
+        expected_int_1 = 75867
+        expected_int_2 = 45248 
+        expected_int_3 = 10028099520 
+
+        shortener = ShortenUrl()
+
+        self.assertEqual(shortener.decode(str_1), expected_int_1)
+        self.assertEqual(shortener.decode(str_2), expected_int_2)
+        self.assertEqual(shortener.decode(str_3), expected_int_3)
 
 
 class UrlModelTest(TestCase):
