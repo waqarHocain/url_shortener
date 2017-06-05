@@ -37,6 +37,8 @@ def homepage(request):
 
 
 def mapper(request, id):
+    shrtnr = ShortenUrl()
+    id = shrtnr.decode(id)
     try:
         url = Url.objects.get(id = int(id))
     except Url.DoesNotExist:

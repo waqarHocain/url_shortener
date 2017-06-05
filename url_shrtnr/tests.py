@@ -86,13 +86,15 @@ class MapperTest(TestCase):
         self.assertEqual(found.func, mapper)
 
     def test_redirects_to_correct_url_for_a_given_id(self):
-        url = Url.objects.create(
-            full_url = "https://www.github.com/waqarHocain"
-        )
-        url.shortened_url = "http://localhost:8000/" + str(url.id)
+        shrtnr = ShortenUrl()
+        url = Url()
+        url.id = 13
+        url.full_url = "https://www.github.com/waqarHocain"
+        url.save()
+        url.shortened_url = "http://localhost:8000/" + shrtnr.encode(url.id)
         url.save()
 
-        id = url.id
+        id = shrtnr.encode(url.id)
         request = HttpRequest()
         response = mapper(request, id)
 
