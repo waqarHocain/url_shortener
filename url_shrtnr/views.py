@@ -36,6 +36,20 @@ def homepage(request):
     return render(request, "url_shrtnr/index.html")
 
 
+def create_url(request, url):
+    shrtnr = ShortenUrl()
+    _url = Url.objects.create(full_url = url)
+    _url.shortened_url = "http://localhost:8000/" + shrtnr.encode(_url.id) 
+    _url.save()
+
+    context = {
+        "full_url": _url.full_url,
+        "shortened_url": _url.shortened_url
+    }
+
+    return JsonResponse(context)
+
+
 def mapper(request, id):
     shrtnr = ShortenUrl()
     id = shrtnr.decode(id)

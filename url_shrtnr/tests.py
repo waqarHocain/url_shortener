@@ -2,7 +2,7 @@ from django.core.urlresolvers import resolve, reverse
 from django.http import HttpRequest
 from django.test import TestCase
 
-from .views import homepage, mapper
+from .views import homepage, mapper, create_url
 from .base62 import ShortenUrl
 from .models import Url
 
@@ -108,6 +108,34 @@ class MapperTest(TestCase):
         self.assertRaises(mapper, args=(request, id))
 
         #self.assertEqual(response.status_code, 404)
+
+
+class CreateUrlTest(TestCase):
+
+    def test_requests_to_new_resolves_to_create_url(self):
+        found = resolve("/new/http://somerandomdude.me")
+        self.assertEqual(found.func, create_url)
+
+    def test_it_can_create_a_new_url_when_passed_a_url_as_parameter(self):
+        request = HttpRequest()
+        request.GET = "/new/"
+        url = "http://somerandomdude.me"
+        response = create_url(request, url)
+
+        self.assertEqual(Url.objects.count(), 1)
+
+    def test_returns_shortened_url_in_response_along_with_original_url(self):
+        request = HttpRequest()
+        request.GET = "/new/"
+        url = "http://somerandomdude.me"
+        response = create_url(request, url)
+
+        shrtnr = ShortenUrl()
+        saved_url = Url.objects.first()
+        shortened_url = "http://localhost:8000/" + shrtnr.encode(saved_url.id)
+
+        self.assertIn(url, response.content)
+        self.assertIn(saved_url.shortened_url, response.content)
 
 
 class ShortenUrlTest(TestCase):
