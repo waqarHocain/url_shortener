@@ -40,9 +40,11 @@ def homepage(request):
 
 
 def create_url(request, url):
-    shrtnr = ShortenUrl()
     _url = Url.objects.create(full_url = url)
-    _url.shortened_url = "http://localhost:8000/" + shrtnr.encode(_url.id) 
+
+    shrtnr = ShortenUrl()
+    domain_name = check_trailing_slash(request.build_absolute_uri("/"))
+    _url.shortened_url = domain_name + shrtnr.encode(_url.id) 
     _url.save()
 
     context = {

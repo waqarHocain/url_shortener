@@ -65,7 +65,7 @@ class NewVisitorTest(LiveServerTestCase):
         # application and get back shortened url in response as JSON.
         # He figures out that if you make a request to `\new` followed by url,
         # you'll get the shortened url. 
-        jacks_url = "http://wikipedia.org"
+        jacks_url = "https://www.wikipedia.org/"
 
         self.browser = webdriver.Firefox()
         self.browser.get(self.url + "/new/" + jacks_url)

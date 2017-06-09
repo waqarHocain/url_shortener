@@ -133,6 +133,11 @@ class CreateUrlTest(TestCase):
 
     def setUp(self):
         self.test_url = "https://www.github.com/waqarHocain"
+        self.fake_meta = {
+            'SERVER_NAME':'127.0.0.1',
+            'HTTP_HOST':'127.0.0.1',
+            'SERVER_PORT': 8000
+        }
 
     def test_requests_to_new_resolves_to_create_url(self):
         found = resolve("/new/http://somerandomdude.me")
@@ -140,6 +145,7 @@ class CreateUrlTest(TestCase):
 
     def test_it_can_create_a_new_url_when_passed_a_url_as_parameter(self):
         request = HttpRequest()
+        request.META = self.fake_meta
         request.GET = "/new/"
         url = self.test_url
         response = create_url(request, url)
@@ -148,16 +154,19 @@ class CreateUrlTest(TestCase):
 
     def test_returns_shortened_url_in_response_along_with_original_url(self):
         request = HttpRequest()
+        request.META = self.fake_meta
         request.GET = "/new/"
         url = self.test_url
         response = create_url(request, url)
 
-        shrtnr = ShortenUrl()
         saved_url = Url.objects.first()
-        shortened_url = "http://localhost:8000/" + shrtnr.encode(saved_url.id)
+
+        shrtnr = ShortenUrl()
+        domain_name = request.build_absolute_uri() + "/"
+        shortened_url = domain_name + shrtnr.encode(saved_url.id)
 
         self.assertIn(url, response.content)
-        self.assertIn(saved_url.shortened_url, response.content)
+        self.assertIn(shortened_url, response.content)
 
 
 class ShortenUrlTest(TestCase):
