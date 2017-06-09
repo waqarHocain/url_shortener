@@ -1,3 +1,5 @@
+from django.core.validators import URLValidator
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.http.response import Http404
 from django.shortcuts import render, redirect
@@ -22,7 +24,15 @@ def homepage(request):
             }
             return JsonResponse(context)
 
-        # url is not saved
+        # url is not saved, check if it is a valid url
+        try:
+            URLValidator()(request.POST["input_url"])
+        except ValidationError:
+            return JsonResponse({
+                "error": "Invalid url"
+            })
+
+        # url is not saved and it is a valid url, save it
         shrtnr = ShortenUrl()
 
         domain_name = check_trailing_slash(request.build_absolute_uri())
@@ -40,6 +50,15 @@ def homepage(request):
 
 
 def create_url(request, url):
+    # check if it is a valid url
+    try:
+        URLValidator()(url)
+    except ValidationError:
+        return JsonResponse({
+            "error": "Invalid url"
+        })
+
+    # it is a valid url, save it
     _url = Url.objects.create(full_url = url)
 
     shrtnr = ShortenUrl()

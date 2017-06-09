@@ -94,6 +94,27 @@ class HomepageTest(TestCase):
         self.assertIn(self.test_url, res2.content)
         self.assertIn(shortened_url, res2.content)
 
+    def test_only_valid_urls_are_saved(self):
+        invalid_url = "somethinginvalid.com"
+        valid_url = "https://medium.com/chingu/chingu-frontend-web-development-challenge-1-8ce9810fa3c8"
+       
+        request = HttpRequest()
+        request.META = self.fake_meta
+        request.method = "POST"
+        request.POST["input_url"] = invalid_url
+        response = homepage(request)
+
+        self.assertEqual(Url.objects.count(), 0)
+        self.assertIn("Invalid url", response.content)
+
+        request.POST["input_url"] = valid_url
+        response2 = homepage(request)
+        saved_url = Url.objects.first()
+
+        self.assertEqual(Url.objects.count(), 1)
+        self.assertEqual(saved_url.full_url, valid_url)
+
+
 
 class MapperTest(TestCase):
     
@@ -167,6 +188,28 @@ class CreateUrlTest(TestCase):
 
         self.assertIn(url, response.content)
         self.assertIn(shortened_url, response.content)
+
+    def test_only_valid_urls_are_saved(self):
+        invalid_url = "somethinginvalid.com"
+        valid_url = "https://medium.com/chingu/chingu-frontend-web-development-challenge-1-8ce9810fa3c8"
+
+        request = HttpRequest()
+        request.META = self.fake_meta
+
+        request.GET = "/new/"
+        url = invalid_url
+        response = create_url(request, url)
+
+        self.assertEqual(Url.objects.count(), 0)
+        self.assertIn("Invalid url", response.content)
+
+        request.GET = "/new/"
+        url = valid_url
+        response2 = create_url(request, url)
+        saved_url = Url.objects.first()
+
+        self.assertEqual(Url.objects.count(), 1)
+        self.assertEqual(saved_url.full_url, valid_url)
 
 
 class ShortenUrlTest(TestCase):
