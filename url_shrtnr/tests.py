@@ -9,6 +9,14 @@ from .models import Url
 
 class HomepageTest(TestCase):
 
+    def setUp(self):
+        self.test_url = "https://www.github.com/waqarHocain"
+        self.fake_meta = {
+            'SERVER_NAME':'127.0.0.1',
+            'HTTP_HOST':'127.0.0.1',
+            'SERVER_PORT': 8000
+        }
+
     def test_root_url_resolves_to_homepage_view(self):
         found = resolve("/")
         self.assertEqual(found.func, homepage)
@@ -19,68 +27,79 @@ class HomepageTest(TestCase):
 
     def test_homepage_can_save_a_POST_request(self):
         request = HttpRequest()
+        request.META = self.fake_meta
         request.method = "POST"
-        request.POST["input_url"] = "https://www.github.com/waqarHocain"
+        request.POST["input_url"] = self.test_url 
 
         response = homepage(request)
 
         self.assertEqual(Url.objects.count(), 1)
 
         new_url = Url.objects.first()
-        self.assertEqual("https://www.github.com/waqarHocain",
-                         new_url.full_url)
+        self.assertEqual(self.test_url, new_url.full_url)
 
-        self.assertIn("https://www.github.com/waqarHocain",
-                      response.content.decode())
+        self.assertIn(self.test_url, response.content.decode())
 
     def test_shortened_url_is_saved_with_base62_encoded_id(self):
         request = HttpRequest()
+        request.META = self.fake_meta
         request.method = "POST"
         request.POST["input_url"] = "https://www.twitter.com/waqarHocain"
         response1 = homepage(request)
 
         shrtnr = ShortenUrl()
 
+        domain_name = request.build_absolute_uri() + "/"
+
         first_saved_url = Url.objects.first()
         base62_str1 = shrtnr.encode(first_saved_url.id)
-        expected_shortened_url_1 = "http://localhost:8000/" + base62_str1
+        expected_shortened_url_1 = domain_name + base62_str1
         self.assertIn(expected_shortened_url_1, response1.content)
 
 
         request2 = HttpRequest()
-        request2.POST["input_url"] = "https://www.github.com.com/waqarHocain"
+        request2.META = self.fake_meta
+        request2.POST["input_url"] = self.test_url
         response2 = homepage(request)
 
         second_saved_url = Url.objects.first()
         base62_str2 = shrtnr.encode(second_saved_url.id)
-        expected_shortened_url_2 = "http://localhost:8000/" + base62_str2
+        expected_shortened_url_2 = domain_name + base62_str2
 
         self.assertIn(expected_shortened_url_2, response2.content)
 
 
     def test_for_an_already_saved_url_no_new_instance_is_saved(self):
         request = HttpRequest()
+        request.META = self.fake_meta
         request.method = "POST"
-        
-        request.POST["input_url"] = "https://www.github.com/waqarHocain"
+        request.POST["input_url"] = self.test_url
+
         res1 = homepage(request)
 
-        shortened_url = "http://localhost:8000/1"
+        # generate shortened url
+        url = Url.objects.first()
+        shrtnr = ShortenUrl()
+        domain_name = request.build_absolute_uri() + "/"
+        shortened_url = domain_name + shrtnr.encode(url.id)
 
         self.assertEqual(Url.objects.count(), 1)
-        self.assertIn("https://www.github.com/waqarHocain", res1.content)
+        self.assertIn(self.test_url, res1.content)
         self.assertIn(shortened_url, res1.content)
 
-        request.POST["input_url"] = "https://www.github.com/waqarHocain"
+        request.POST["input_url"] = self.test_url
         res2 = homepage(request)
 
         self.assertEqual(Url.objects.count(), 1)
-        self.assertIn("https://www.github.com/waqarHocain", res2.content)
+        self.assertIn(self.test_url, res2.content)
         self.assertIn(shortened_url, res2.content)
 
 
 class MapperTest(TestCase):
     
+    def setUp(self):
+        self.test_url = "https://www.github.com/waqarHocain"
+
     def test_url_with_id_is_resolved_to_mapper(self):
         found = resolve("/1/")
         self.assertEqual(found.func, mapper)
@@ -89,7 +108,7 @@ class MapperTest(TestCase):
         shrtnr = ShortenUrl()
         url = Url()
         url.id = 13
-        url.full_url = "https://www.github.com/waqarHocain"
+        url.full_url = self.test_url
         url.save()
         url.shortened_url = "http://localhost:8000/" + shrtnr.encode(url.id)
         url.save()
@@ -112,6 +131,9 @@ class MapperTest(TestCase):
 
 class CreateUrlTest(TestCase):
 
+    def setUp(self):
+        self.test_url = "https://www.github.com/waqarHocain"
+
     def test_requests_to_new_resolves_to_create_url(self):
         found = resolve("/new/http://somerandomdude.me")
         self.assertEqual(found.func, create_url)
@@ -119,7 +141,7 @@ class CreateUrlTest(TestCase):
     def test_it_can_create_a_new_url_when_passed_a_url_as_parameter(self):
         request = HttpRequest()
         request.GET = "/new/"
-        url = "http://somerandomdude.me"
+        url = self.test_url
         response = create_url(request, url)
 
         self.assertEqual(Url.objects.count(), 1)
@@ -127,7 +149,7 @@ class CreateUrlTest(TestCase):
     def test_returns_shortened_url_in_response_along_with_original_url(self):
         request = HttpRequest()
         request.GET = "/new/"
-        url = "http://somerandomdude.me"
+        url = self.test_url
         response = create_url(request, url)
 
         shrtnr = ShortenUrl()
@@ -171,9 +193,12 @@ class ShortenUrlTest(TestCase):
 
 class UrlModelTest(TestCase):
 
+    def setUp(self):
+        self.test_url = "https://www.github.com/waqarHocain"
+
     def test_saving_and_retrieving_urls(self):
         first_url = Url()
-        first_url.full_url = "https://www.github.com/waqarHocain"
+        first_url.full_url = self.test_url
         first_url.save()
         first_url.shortened_url = "http://localhost:8000/" + str(first_url.id)
         first_url.save()
@@ -190,8 +215,7 @@ class UrlModelTest(TestCase):
 
         first_saved_url = saved_urls[0]
         second_saved_url = saved_urls[1]
-        self.assertEqual(first_saved_url.full_url,
-                         "https://www.github.com/waqarHocain")
+        self.assertEqual(first_saved_url.full_url, self.test_url)
         self.assertEqual(first_saved_url.shortened_url,
                          "http://localhost:8000/1")
         self.assertEqual(second_saved_url.full_url,

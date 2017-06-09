@@ -8,9 +8,10 @@ from django.test import LiveServerTestCase
 
 class NewVisitorTest(LiveServerTestCase):
 
+
     def setUp(self):
         self.browser = webdriver.Firefox()
-        self.url = "http://localhost:8000/"
+        self.url = self.live_server_url
         self.test_page_url = "https://github.com/waqarHocain"
 
     def tearDown(self):
@@ -46,12 +47,14 @@ class NewVisitorTest(LiveServerTestCase):
         page_content = self.browser.find_element_by_tag_name("body").text
 
         self.assertIn(self.test_page_url, page_content)
-        self.assertRegexpMatches(page_content, self.url + "\d+")
+        regex = self.url + "/" + r"[\w\d]+"
+        self.assertRegexpMatches(page_content, regex)
 
 
-        # He enters the <current_page_url>/1 into browser address bar, he's
+        # He enters the shortened url into browser address bar, he's
         # redirected to https://github.com/waqarHocain
-        self.browser.get(self.url + "1")
+        shortened_url = re.search(regex, page_content).group()
+        self.browser.get(shortened_url)
 
         self.assertEqual(self.browser.current_url, self.test_page_url)
 

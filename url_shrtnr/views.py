@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 
 from .models import Url
 from .base62 import ShortenUrl
+from .utils import check_trailing_slash
 
 
 def homepage(request):
@@ -24,8 +25,10 @@ def homepage(request):
         # url is not saved
         shrtnr = ShortenUrl()
 
+        domain_name = check_trailing_slash(request.build_absolute_uri())
+
         url = Url.objects.create(full_url=request.POST["input_url"])
-        url.shortened_url = "http://localhost:8000/" + shrtnr.encode(url.id)
+        url.shortened_url = domain_name + shrtnr.encode(url.id)
         url.save()
 
         context = {
